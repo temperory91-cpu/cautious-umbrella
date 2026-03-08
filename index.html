@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Evaluation Engine</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+
+        :root {
+            --bg: #030303;
+            --card: rgba(15, 15, 15, 0.7);
+            --accent: #ffffff;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Background Paths */
+        .bg-paths {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #111 0%, #000 100%);
+            pointer-events: none;
+        }
+
+        .floating-path {
+            fill: none;
+            stroke: var(--accent);
+            opacity: 0;
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Shining Text Animation (Requested) */
+        .shining-text {
+            background: linear-gradient(110deg, #404040, 35%, #fff, 50%, #404040, 75%, #404040);
+            background-size: 200% 100%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            font-size: 1.5rem;
+            animation: shine 2s linear infinite;
+        }
+
+        @keyframes shine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Button Logic */
+        .btn-blob-container {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .btn-blob {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: var(--accent);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+            z-index: 0;
+        }
+        .btn-blob-container:hover .btn-blob { width: 300%; height: 300%; }
+        .btn-blob-container:hover span { color: #000; z-index: 10; position: relative; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-paths" id="pathCanvas">
+        <svg id="mainSvg" viewBox="0 0 696 316" class="w-full h-full"></svg>
+    </div>
+
+    <header class="fixed top-0 w-full p-8 flex justify-between items-center z-50 mix-blend-difference">
+        <div class="text-2xl font-bold tracking-tighter">EVAL-SYS</div>
+        <div class="flex gap-8 text-[10px] tracking-[0.3em] opacity-60 uppercase">
+            <span>Core: Gemini-1.5</span>
+            <span>Status: Active</span>
+        </div>
+    </header>
+
+    <section class="h-screen flex flex-col items-center justify-center px-6 text-center">
+        <h1 class="text-6xl md:text-9xl font-bold tracking-tight mb-8">
+            AI EXAM <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-neutral-200 to-neutral-600">EVALUATION</span>
+        </h1>
+        <button onclick="gsap.to(window, {scrollTo: '#upload', duration: 1.5, ease: 'expo.inOut'})" 
+                class="btn-blob-container px-10 py-4 border border-white/20 rounded-full group">
+            <div class="btn-blob"></div>
+            <span class="relative transition-colors duration-300">DISCOVER EXCELLENCE →</span>
+        </button>
+    </section>
+
+    <section id="upload" class="min-h-screen flex items-center justify-center p-6 bg-neutral-950/20">
+        <div class="glass-panel max-w-2xl w-full p-12 text-center">
+            <h2 class="text-3xl font-bold mb-10 tracking-tight">System Input</h2>
+            <div class="grid gap-6 mb-10">
+                <label class="group relative p-8 border border-white/10 rounded-2xl cursor-pointer hover:border-white/40 transition-all">
+                    <input type="file" id="qUpload" class="hidden" accept=".pdf">
+                    <div id="qStatus" class="text-sm opacity-50 group-hover:opacity-100 transition-opacity">Upload Question Paper</div>
+                    <div class="mt-2 text-[10px] text-green-400 font-mono hidden" id="qCheck">✔ LOADED</div>
+                </label>
+                <label class="group relative p-8 border border-white/10 rounded-2xl cursor-pointer hover:border-white/40 transition-all">
+                    <input type="file" id="aUpload" class="hidden" accept=".pdf">
+                    <div id="aStatus" class="text-sm opacity-50 group-hover:opacity-100 transition-opacity">Upload Answer Sheet</div>
+                    <div class="mt-2 text-[10px] text-green-400 font-mono hidden" id="aCheck">✔ LOADED</div>
+                </label>
+            </div>
+            <button id="btnEvaluate" class="w-full py-5 bg-white text-black rounded-2xl font-bold text-lg hover:scale-[1.02] active:scale-95 transition-all shadow-xl">
+                BEGIN ANALYSIS
+            </button>
+        </div>
+    </section>
+
+    <section id="results" class="min-h-screen flex flex-col items-center justify-center p-6 opacity-0 translate-y-20">
+        <div class="max-w-5xl w-full grid lg:grid-cols-2 gap-8">
+            <div class="glass-panel p-10">
+                <div class="text-[10px] tracking-widest opacity-40 uppercase mb-4">Metric Output</div>
+                
+                <div id="aiLoader" class="hidden py-10">
+                    <h1 class="shining-text">JARVIS is thinking...</h1>
+                </div>
+
+                <div id="resultContent">
+                    <div id="finalScore" class="text-8xl font-bold mb-8 italic tracking-tighter">0/10</div>
+                    <div class="h-px bg-white/10 mb-8"></div>
+                    <ul id="feedbackList" class="space-y-4 text-neutral-400"></ul>
+                </div>
+            </div>
+            
+            <div class="glass-panel p-10 flex flex-col justify-between">
+                <div class="relative h-64">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+                <div class="flex gap-4 mt-8">
+                    <button onclick="window.location.reload()" class="flex-1 py-4 border border-white/10 rounded-xl hover:bg-white/5 transition-all text-sm uppercase tracking-widest">Reanalyze</button>
+                    <button id="btnExport" class="flex-1 py-4 bg-white text-black rounded-xl font-bold text-sm uppercase tracking-widest">Export Report</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+</html>

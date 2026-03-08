@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+
+:root {
+    --bg: #030303;
+    --card: rgba(15, 15, 15, 0.7);
+    --accent: #ffffff;
+    --border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background-color: var(--bg);
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+/* Background Animated Paths */
+.bg-paths {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(circle at 50% 50%, #111 0%, #000 100%);
+    pointer-events: none;
+}
+
+.floating-path {
+    fill: none;
+    stroke: var(--accent);
+    opacity: 0;
+}
+
+/* Glassmorphism Panel Styling */
+.glass-panel {
+    background: var(--card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* SHINING TEXT ANIMATION 
+   Replicates the React Framer Motion component logic 
+*/
+.shining-text {
+    background: linear-gradient(
+        110deg,
+        #404040 35%,
+        #ffffff 50%,
+        #404040 75%,
+        #404040 100%
+    );
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    font-size: 1.5rem;
+    font-weight: 400;
+    animation: shine 2s linear infinite;
+    display: inline-block;
+}
+
+@keyframes shine {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Custom Animated Button with Blob Effect */
+.btn-blob-container {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.btn-blob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    z-index: 0;
+}
+
+.btn-blob-container:hover .btn-blob {
+    width: 300%;
+    height: 300%;
+}
+
+.btn-blob-container:hover span {
+    color: #000;
+    z-index: 10;
+    position: relative;
+}
+
+/* Result Elements */
+#feedbackList {
+    text-align: left;
+    list-style: none;
+    padding: 0;
+}
+
+#feedbackList li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: #a3a3a3;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+}
+
+#feedbackList li::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Transitions for dynamic content */
+.hidden {
+    display: none !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
